@@ -2,7 +2,7 @@
 
 # =========================================================
 # AWP + MINE FULL INSTALLER
-# MULTI WALLET VERSION
+# 
 # =========================================================
 
 set -e
@@ -10,7 +10,8 @@ set -e
 clear
 
 echo "================================================="
-echo "        AWP + MINE INSTALLER"
+echo "     AWP + MINE INSTALLER"
+echo "     MULTI WALLET VERSION"
 echo "================================================="
 echo ""
 
@@ -22,9 +23,10 @@ echo "Select Base Directory:"
 echo ""
 echo "1) /root"
 echo "2) /home/ubuntu"
+echo "3) /workspaces/codespaces-blank"
 echo ""
 
-read -p "Choose [1-2]: " BASE_OPTION
+read -p "Choose [1-3]: " BASE_OPTION
 
 if [ "$BASE_OPTION" == "1" ]; then
 
@@ -33,6 +35,10 @@ if [ "$BASE_OPTION" == "1" ]; then
 elif [ "$BASE_OPTION" == "2" ]; then
 
     BASE_DIR="/home/ubuntu"
+
+elif [ "$BASE_OPTION" == "3" ]; then
+
+    BASE_DIR="/workspaces/codespaces-blank"
 
 else
 
@@ -159,14 +165,6 @@ exit 1
 esac
 
 # =========================================================
-# DIRECTORIES
-# =========================================================
-
-AWP_WALLET_DIR="$BASE_DIR/awp-wallet"
-AWP_SKILL_DIR="$BASE_DIR/awp-skill"
-MINE_DIR="$BASE_DIR/mine-skill"
-
-# =========================================================
 # SHOW CONFIG
 # =========================================================
 
@@ -196,7 +194,13 @@ echo "================================================="
 echo "[STEP 1] SYSTEM UPDATE"
 echo "================================================="
 
-apt update && apt upgrade -y
+if command -v sudo >/dev/null 2>&1; then
+    sudo apt update
+    sudo apt upgrade -y
+else
+    apt update
+    apt upgrade -y
+fi
 
 # =========================================================
 # STEP 2 - INSTALL DEPENDENCIES
@@ -207,17 +211,37 @@ echo "================================================="
 echo "[STEP 2] INSTALL DEPENDENCIES"
 echo "================================================="
 
-apt install -y \
-curl \
-git \
-build-essential \
-python3 \
-python3-pip \
-python3-venv \
-ca-certificates \
-software-properties-common \
-htop \
-jq
+PACKAGES=()
+
+command -v curl >/dev/null 2>&1 || PACKAGES+=("curl")
+command -v git >/dev/null 2>&1 || PACKAGES+=("git")
+command -v gcc >/dev/null 2>&1 || PACKAGES+=("build-essential")
+command -v python3 >/dev/null 2>&1 || PACKAGES+=("python3")
+command -v pip3 >/dev/null 2>&1 || PACKAGES+=("python3-pip")
+
+dpkg -s python3-venv >/dev/null 2>&1 || PACKAGES+=("python3-venv")
+dpkg -s ca-certificates >/dev/null 2>&1 || PACKAGES+=("ca-certificates")
+dpkg -s software-properties-common >/dev/null 2>&1 || PACKAGES+=("software-properties-common")
+
+command -v htop >/dev/null 2>&1 || PACKAGES+=("htop")
+command -v jq >/dev/null 2>&1 || PACKAGES+=("jq")
+
+if [ ${#PACKAGES[@]} -eq 0 ]; then
+
+    echo "[✓] All dependencies already installed"
+
+else
+
+    echo "[+] Installing missing packages:"
+    printf '%s\n' "${PACKAGES[@]}"
+
+    if command -v sudo >/dev/null 2>&1; then
+        sudo apt install -y "${PACKAGES[@]}"
+    else
+        apt install -y "${PACKAGES[@]}"
+    fi
+
+fi
 
 # =========================================================
 # STEP 3 - INSTALL NODEJS
@@ -228,9 +252,28 @@ echo "================================================="
 echo "[STEP 3] INSTALL NODEJS"
 echo "================================================="
 
-curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+if command -v node >/dev/null 2>&1; then
 
-apt install -y nodejs
+    echo "[✓] NodeJS already installed"
+    node -v
+
+else
+
+    echo "[+] Installing NodeJS 22"
+
+    if command -v sudo >/dev/null 2>&1; then
+
+        curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash -
+        sudo apt install -y nodejs
+
+    else
+
+        curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+        apt install -y nodejs
+
+    fi
+
+fi
 
 echo ""
 echo "[+] Version Check"
@@ -248,101 +291,15 @@ echo "================================================="
 echo "[STEP 4] INSTALL PM2"
 echo "================================================="
 
-npm install -g pm2
+if command -v pm2 >/dev/null 2>&1; then
 
-# =========================================================
-# STEP 5 - INSTALL AWP WALLET
-# =========================================================
+    echo "[✓] PM2 already installed"
 
-echo ""
-echo "================================================="
-echo "[STEP 5] INSTALL AWP-WALLET"
-echo "================================================="
+else
 
-cd $BASE_DIR
-
-if [ ! -d "$AWP_WALLET_DIR" ]; then
-
-    git clone https://github.com/awp-core/awp-wallet.git
+    npm install -g pm2
 
 fi
-
-cd $AWP_WALLET_DIR
-
-chmod +x install.sh
-
-./install.sh
-
-# =========================================================
-# STEP 6 - INSTALL AWP SKILL
-# =========================================================
-
-echo ""
-echo "================================================="
-echo "[STEP 6] INSTALL AWP-SKILL"
-echo "================================================="
-
-cd $BASE_DIR
-
-if [ ! -d "$AWP_SKILL_DIR" ]; then
-
-    git clone https://github.com/awp-core/awp-skill.git
-
-fi
-
-cd $AWP_SKILL_DIR
-
-if [ ! -d "$AWP_SKILL_DIR/venv" ]; then
-
-    python3 -m venv venv
-
-fi
-
-source venv/bin/activate
-
-pip install --upgrade pip
-
-pip install \
-web3 \
-requests \
-websocket-client \
-eth-account
-
-# =========================================================
-# STEP 7 - INSTALL MINE-SKILL
-# =========================================================
-
-echo ""
-echo "================================================="
-echo "[STEP 7] INSTALL MINE-SKILL"
-echo "================================================="
-
-cd $BASE_DIR
-
-if [ ! -d "$MINE_DIR" ]; then
-
-    git clone https://github.com/awp-worknet/mine-skill.git
-
-fi
-
-cd $MINE_DIR
-
-if [ ! -d "$MINE_DIR/venv" ]; then
-
-    python3 -m venv venv
-
-fi
-
-source venv/bin/activate
-
-pip install --upgrade pip
-
-pip install -r requirements-browser.txt -i https://pypi.org/simple || true
-pip install -r requirements-core.txt -i https://pypi.org/simple || true
-
-chmod +x scripts/bootstrap.sh
-
-./scripts/bootstrap.sh || true
 
 # =========================================================
 # WALLET LOOP
@@ -360,14 +317,136 @@ do
 
     mkdir -p "$WALLET_HOME"
 
+    AWP_WALLET_DIR="$WALLET_HOME/awp-wallet"
+    AWP_SKILL_DIR="$WALLET_HOME/awp-skill"
+    MINE_DIR="$WALLET_HOME/mine-skill"
+
+    # =====================================================
+    # INSTALL AWP-WALLET
+    # =====================================================
+
+    echo ""
+    echo "================================================="
+    echo "[+] INSTALL AWP-WALLET"
+    echo "================================================="
+
+    cd "$WALLET_HOME"
+
+    if [ ! -d "$AWP_WALLET_DIR" ]; then
+
+        git clone https://github.com/awp-core/awp-wallet.git
+
+    else
+
+        echo "[✓] awp-wallet already exists"
+
+    fi
+
+    cd "$AWP_WALLET_DIR"
+
+    chmod +x install.sh
+
+    ./install.sh
+
+    sleep 5
+
+    # =====================================================
+    # INSTALL AWP-SKILL
+    # =====================================================
+
+    echo ""
+    echo "================================================="
+    echo "[+] INSTALL AWP-SKILL"
+    echo "================================================="
+
+    cd "$WALLET_HOME"
+
+    if [ ! -d "$AWP_SKILL_DIR" ]; then
+
+        git clone https://github.com/awp-core/awp-skill.git
+
+    else
+
+        echo "[✓] awp-skill already exists"
+
+    fi
+
+    cd "$AWP_SKILL_DIR"
+
+    if [ ! -d "venv" ]; then
+
+        python3 -m venv venv
+
+    fi
+
+    source venv/bin/activate
+
+    pip install --upgrade pip
+
+    pip install \
+    web3 \
+    requests \
+    websocket-client \
+    eth-account
+
+    deactivate
+
+    sleep 3
+
+    # =====================================================
+    # INSTALL MINE-SKILL
+    # =====================================================
+
+    echo ""
+    echo "================================================="
+    echo "[+] INSTALL MINE-SKILL"
+    echo "================================================="
+
+    cd "$WALLET_HOME"
+
+    if [ ! -d "$MINE_DIR" ]; then
+
+        git clone https://github.com/awp-worknet/mine-skill.git
+
+    else
+
+        echo "[✓] mine-skill already exists"
+
+    fi
+
+    cd "$MINE_DIR"
+
+    if [ ! -d ".venv" ]; then
+
+        python3 -m venv .venv
+
+    fi
+
+    source .venv/bin/activate
+
+    pip install --upgrade pip
+
+    pip install -r requirements-browser.txt -i https://pypi.org/simple || true
+    pip install -r requirements-core.txt -i https://pypi.org/simple || true
+
+    chmod +x scripts/bootstrap.sh
+
+    ./scripts/bootstrap.sh || true
+
+    sleep 10
+
     # =====================================================
     # CREATE WALLET
     # =====================================================
 
     echo ""
-    echo "[+] Creating Wallet"
+    echo "================================================="
+    echo "[+] CREATE WALLET"
+    echo "================================================="
 
     HOME="$WALLET_HOME" awp-wallet init || true
+
+    sleep 3
 
     # =====================================================
     # GET ADDRESS
@@ -390,6 +469,8 @@ do
     TOKEN=$(HOME="$WALLET_HOME" awp-wallet unlock | jq -r '.sessionToken')
 
     echo "$TOKEN"
+
+    sleep 3
 
     # =====================================================
     # AWP ONBOARDING
@@ -424,6 +505,8 @@ do
 
     HOME="$WALLET_HOME" python3 onchain-register.py || true
 
+    sleep 5
+
     # =====================================================
     # DOCTOR CHECK
     # =====================================================
@@ -436,6 +519,8 @@ do
     cd "$MINE_DIR"
 
     HOME="$WALLET_HOME" python3 scripts/run_tool.py doctor || true
+
+    sleep 5
 
     # =====================================================
     # START MINER
@@ -469,9 +554,9 @@ do
 
         echo ""
         echo "[!] Failed / Timeout"
-        echo "[!] Retrying in 15 seconds..."
+        echo "[!] Retrying in 20 seconds..."
 
-        sleep 15
+        sleep 20
 
         ATTEMPT=$((ATTEMPT+1))
 
@@ -515,20 +600,35 @@ do
 done
 
 echo ""
-echo "Realtime Logs:"
-echo "tail -f $MINE_DIR/output/agent-runs/*.log"
+echo "================================================="
+echo "HOW TO OPEN WALLET"
+echo "================================================="
 
 echo ""
-echo "Check Miner Status:"
-echo "HOME=$BASE_DIR/w1 python3 scripts/run_tool.py agent-control status"
+echo "Wallet 1:"
+echo "cat $BASE_DIR/w1/.openclaw-wallet/wallets/wallets.json"
 
 echo ""
-echo "Stop Miner:"
-echo "HOME=$BASE_DIR/w1 python3 scripts/run_tool.py agent-control stop"
+echo "Wallet 2:"
+echo "cat $BASE_DIR/w2/.openclaw-wallet/wallets/wallets.json"
 
 echo ""
-echo "Wallet JSON:"
-echo "cat $BASE_DIR/w1/.openclaw-wallet/wallets/default/wallet.json"
+echo "================================================="
+echo "CHECK MINER STATUS"
+echo "================================================="
+
+echo ""
+echo "Wallet 1:"
+echo "HOME=$BASE_DIR/w1 python3 $BASE_DIR/w1/mine-skill/scripts/run_tool.py agent-control status"
+
+echo ""
+echo "================================================="
+echo "STOP MINER"
+echo "================================================="
+
+echo ""
+echo "Wallet 1:"
+echo "HOME=$BASE_DIR/w1 python3 $BASE_DIR/w1/mine-skill/scripts/run_tool.py agent-control stop"
 
 echo ""
 echo "Done 🚀"
