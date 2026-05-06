@@ -1,47 +1,211 @@
 #!/bin/bash
 
 # =========================================================
-# FULL AWP + MINE MULTI WALLET AUTO INSTALLER
-# ROOT VPS VERSION
+# AWP + MINE FULL INSTALLER
+# MULTI WALLET VERSION
 # =========================================================
 
 set -e
 
-BASE_DIR="/root"
-MINE_DIR="$BASE_DIR/mine-skill"
-AWP_WALLET_DIR="$BASE_DIR/awp-wallet"
+clear
+
+echo "================================================="
+echo "        AWP + MINE INSTALLER"
+echo "================================================="
+echo ""
 
 # =========================================================
-# DATASET
+# BASE DIRECTORY MENU
 # =========================================================
 
-# Examples:
-# ds_wikipedia
-# ds_arxiv
-# ds_amazon_reviews
-# ds_basic_amazon_products_active
-# ds_basic_amazon_products_pending
-# ds_linkedin_company
-# ds_linkedin_profiles
+echo "Select Base Directory:"
+echo ""
+echo "1) /root"
+echo "2) /home/ubuntu"
+echo ""
 
+read -p "Choose [1-2]: " BASE_OPTION
+
+if [ "$BASE_OPTION" == "1" ]; then
+
+    BASE_DIR="/root"
+
+elif [ "$BASE_OPTION" == "2" ]; then
+
+    BASE_DIR="/home/ubuntu"
+
+else
+
+    echo "Invalid option"
+    exit 1
+
+fi
+
+# =========================================================
+# WALLET COUNT
+# =========================================================
+
+echo ""
+
+read -p "How many wallets? : " TOTAL_WALLETS
+
+# =========================================================
+# DATASET MENU
+# =========================================================
+
+echo ""
+echo "Select Dataset:"
+echo ""
+echo "1) Wikipedia"
+echo "2) arXiv"
+echo "3) Amazon Reviews"
+echo "4) Amazon Products"
+echo "5) LinkedIn Company"
+echo ""
+
+read -p "Choose [1-5]: " DATASET_OPTION
+
+case $DATASET_OPTION in
+
+1)
 DATASET="ds_wikipedia"
+;;
 
-# TOTAL WALLET
-TOTAL_WALLETS=3
+2)
+DATASET="ds_arxiv"
+;;
+
+3)
+DATASET="ds_amazon_reviews"
+;;
+
+4)
+DATASET="ds_basic_amazon_products_active"
+;;
+
+5)
+DATASET="ds_linkedin_company"
+;;
+
+*)
+echo "Invalid dataset"
+exit 1
+;;
+
+esac
 
 # =========================================================
-# SYSTEM UPDATE
+# WORKNET MENU
 # =========================================================
 
-echo "[+] Updating system..."
+echo ""
+echo "================================================="
+echo "SELECT WORKNET"
+echo "================================================="
+echo ""
+echo "1) #845300000014  AWP ARDI Worknet"
+echo "2) #845300000013  AWP TMR Worknet"
+echo "3) #845300000012  AWP KYA Worknet"
+echo "4) #845300000011  AWP Community Worknet"
+echo "5) #845300000010  AWP Government Worknet"
+echo "6) #845300000003  Predict WorkNet"
+echo "7) #845300000002  Mine Worknet"
+echo ""
+
+read -p "Choose [1-7]: " WORKNET_OPTION
+
+case $WORKNET_OPTION in
+
+1)
+WORKNET_ID="845300000014"
+WORKNET_NAME="AWP ARDI Worknet"
+;;
+
+2)
+WORKNET_ID="845300000013"
+WORKNET_NAME="AWP TMR Worknet"
+;;
+
+3)
+WORKNET_ID="845300000012"
+WORKNET_NAME="AWP KYA Worknet"
+;;
+
+4)
+WORKNET_ID="845300000011"
+WORKNET_NAME="AWP Community Worknet"
+;;
+
+5)
+WORKNET_ID="845300000010"
+WORKNET_NAME="AWP Government Worknet"
+;;
+
+6)
+WORKNET_ID="845300000003"
+WORKNET_NAME="Predict WorkNet"
+;;
+
+7)
+WORKNET_ID="845300000002"
+WORKNET_NAME="Mine Worknet"
+;;
+
+*)
+echo "Invalid worknet"
+exit 1
+;;
+
+esac
+
+# =========================================================
+# DIRECTORIES
+# =========================================================
+
+AWP_WALLET_DIR="$BASE_DIR/awp-wallet"
+AWP_SKILL_DIR="$BASE_DIR/awp-skill"
+MINE_DIR="$BASE_DIR/mine-skill"
+
+# =========================================================
+# SHOW CONFIG
+# =========================================================
+
+echo ""
+echo "================================================="
+echo "CONFIGURATION"
+echo "================================================="
+echo "Base Dir : $BASE_DIR"
+echo "Wallets  : $TOTAL_WALLETS"
+echo "Dataset  : $DATASET"
+echo "Worknet  : $WORKNET_NAME"
+echo "================================================="
+echo ""
+
+read -p "Continue? [y/n]: " CONFIRM
+
+if [ "$CONFIRM" != "y" ]; then
+    exit 0
+fi
+
+# =========================================================
+# STEP 1 - SYSTEM UPDATE
+# =========================================================
+
+echo ""
+echo "================================================="
+echo "[STEP 1] SYSTEM UPDATE"
+echo "================================================="
 
 apt update && apt upgrade -y
 
 # =========================================================
-# INSTALL DEPENDENCIES
+# STEP 2 - INSTALL DEPENDENCIES
 # =========================================================
 
-echo "[+] Installing dependencies..."
+echo ""
+echo "================================================="
+echo "[STEP 2] INSTALL DEPENDENCIES"
+echo "================================================="
 
 apt install -y \
 curl \
@@ -52,22 +216,23 @@ python3-pip \
 python3-venv \
 ca-certificates \
 software-properties-common \
-htop
+htop \
+jq
 
 # =========================================================
-# INSTALL NODEJS 22
+# STEP 3 - INSTALL NODEJS
 # =========================================================
 
-echo "[+] Installing NodeJS 22..."
+echo ""
+echo "================================================="
+echo "[STEP 3] INSTALL NODEJS"
+echo "================================================="
 
 curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 
 apt install -y nodejs
 
-# =========================================================
-# CHECK VERSION
-# =========================================================
-
+echo ""
 echo "[+] Version Check"
 
 node -v
@@ -75,32 +240,28 @@ npm -v
 python3 --version
 
 # =========================================================
-# INSTALL PM2
+# STEP 4 - INSTALL PM2
 # =========================================================
 
-echo "[+] Installing PM2..."
+echo ""
+echo "================================================="
+echo "[STEP 4] INSTALL PM2"
+echo "================================================="
 
 npm install -g pm2
 
 # =========================================================
-# INSTALL PLAYWRIGHT
+# STEP 5 - INSTALL AWP WALLET
 # =========================================================
 
-echo "[+] Installing Playwright..."
-
-npm install -g playwright
-
-playwright install || true
-
-# =========================================================
-# INSTALL AWP WALLET
-# =========================================================
+echo ""
+echo "================================================="
+echo "[STEP 5] INSTALL AWP-WALLET"
+echo "================================================="
 
 cd $BASE_DIR
 
 if [ ! -d "$AWP_WALLET_DIR" ]; then
-
-    echo "[+] Cloning awp-wallet..."
 
     git clone https://github.com/awp-core/awp-wallet.git
 
@@ -108,35 +269,30 @@ fi
 
 cd $AWP_WALLET_DIR
 
-echo "[+] Installing awp-wallet..."
+chmod +x install.sh
 
-npm install
-
-npm install -g .
+./install.sh
 
 # =========================================================
-# INSTALL MINE SKILL
+# STEP 6 - INSTALL AWP SKILL
 # =========================================================
+
+echo ""
+echo "================================================="
+echo "[STEP 6] INSTALL AWP-SKILL"
+echo "================================================="
 
 cd $BASE_DIR
 
-if [ ! -d "$MINE_DIR" ]; then
+if [ ! -d "$AWP_SKILL_DIR" ]; then
 
-    echo "[+] Cloning mine-skill..."
-
-    git clone https://github.com/awp-worknet/mine-skill.git
+    git clone https://github.com/awp-core/awp-skill.git
 
 fi
 
-cd $MINE_DIR
+cd $AWP_SKILL_DIR
 
-# =========================================================
-# CREATE PYTHON ENV
-# =========================================================
-
-if [ ! -d "$MINE_DIR/venv" ]; then
-
-    echo "[+] Creating virtual environment..."
+if [ ! -d "$AWP_SKILL_DIR/venv" ]; then
 
     python3 -m venv venv
 
@@ -144,61 +300,63 @@ fi
 
 source venv/bin/activate
 
+pip install --upgrade pip
+
+pip install \
+web3 \
+requests \
+websocket-client \
+eth-account
+
 # =========================================================
-# PYTHON REQUIREMENTS
+# STEP 7 - INSTALL MINE-SKILL
 # =========================================================
 
-echo "[+] Installing Python requirements..."
+echo ""
+echo "================================================="
+echo "[STEP 7] INSTALL MINE-SKILL"
+echo "================================================="
+
+cd $BASE_DIR
+
+if [ ! -d "$MINE_DIR" ]; then
+
+    git clone https://github.com/awp-worknet/mine-skill.git
+
+fi
+
+cd $MINE_DIR
+
+if [ ! -d "$MINE_DIR/venv" ]; then
+
+    python3 -m venv venv
+
+fi
+
+source venv/bin/activate
 
 pip install --upgrade pip
 
-pip install -r requirements.txt || true
-pip install -r requirements-core.txt || true
+pip install -r requirements-browser.txt -i https://pypi.org/simple || true
+pip install -r requirements-core.txt -i https://pypi.org/simple || true
 
-# EXTRA FIXES
-pip install beautifulsoup4 || true
-pip install playwright || true
-pip install crawl4ai || true
-pip install httpx || true
+chmod +x scripts/bootstrap.sh
+
+./scripts/bootstrap.sh || true
 
 # =========================================================
-# PLAYWRIGHT BROWSERS
-# =========================================================
-
-echo "[+] Installing Playwright browsers..."
-
-playwright install || true
-
-# =========================================================
-# RUN BOOTSTRAP
-# =========================================================
-
-echo "[+] Running bootstrap..."
-
-bash scripts/bootstrap.sh || true
-
-# =========================================================
-# CHECK ENVIRONMENT
-# =========================================================
-
-echo "[+] Checking miner status..."
-
-python scripts/run_tool.py agent-status || true
-
-# =========================================================
-# MULTI WALLET LOOP
+# WALLET LOOP
 # =========================================================
 
 for i in $(seq 1 $TOTAL_WALLETS)
 do
 
-    WALLET_HOME="$BASE_DIR/w$i"
-    SESSION_NAME="mine-wallet-$i"
-
     echo ""
     echo "================================================="
-    echo "[+] WALLET $i"
+    echo "[WALLET $i]"
     echo "================================================="
+
+    WALLET_HOME="$BASE_DIR/w$i"
 
     mkdir -p "$WALLET_HOME"
 
@@ -206,102 +364,171 @@ do
     # CREATE WALLET
     # =====================================================
 
-    if [ ! -f "$WALLET_HOME/.openclaw-wallet/wallets/default/wallet.json" ]; then
+    echo ""
+    echo "[+] Creating Wallet"
 
-        echo "[+] Creating wallet..."
-
-        HOME="$WALLET_HOME" awp-wallet init || true
-
-    else
-
-        echo "[+] Wallet already exists"
-
-    fi
+    HOME="$WALLET_HOME" awp-wallet init || true
 
     # =====================================================
-    # SHOW ADDRESS
+    # GET ADDRESS
     # =====================================================
 
-    echo "[+] Wallet address:"
+    echo ""
+    echo "[+] Wallet Address"
 
     HOME="$WALLET_HOME" awp-wallet receive || true
 
+    ADDRESS=$(HOME="$WALLET_HOME" awp-wallet receive | jq -r '.eoaAddress')
+
     # =====================================================
-    # STOP OLD PM2
+    # UNLOCK TOKEN
     # =====================================================
 
-    pm2 delete "$SESSION_NAME" 2>/dev/null || true
+    echo ""
+    echo "[+] Unlock Session"
+
+    TOKEN=$(HOME="$WALLET_HOME" awp-wallet unlock | jq -r '.sessionToken')
+
+    echo "$TOKEN"
+
+    # =====================================================
+    # AWP ONBOARDING
+    # =====================================================
+
+    echo ""
+    echo "================================================="
+    echo "[+] AWP ONBOARDING"
+    echo "================================================="
+
+    cd "$AWP_SKILL_DIR/scripts"
+
+    HOME="$WALLET_HOME" python3 relay-start.py \
+    --token "$TOKEN" \
+    --mode principal || true
+
+    HOME="$WALLET_HOME" python3 relay-onboard.py || true
+
+    HOME="$WALLET_HOME" python3 onchain-onboard.py || true
+
+    HOME="$WALLET_HOME" python3 preflight.py \
+    --address "$ADDRESS" || true
+
+    HOME="$WALLET_HOME" python3 query-worknet.py \
+    --worknet "$WORKNET_ID" || true
+
+    HOME="$WALLET_HOME" python3 query-status.py \
+    --token "$TOKEN" || true
+
+    HOME="$WALLET_HOME" python3 relay-register-worknet.py \
+    --worknet "$WORKNET_ID" || true
+
+    HOME="$WALLET_HOME" python3 onchain-register.py || true
+
+    # =====================================================
+    # DOCTOR CHECK
+    # =====================================================
+
+    echo ""
+    echo "================================================="
+    echo "[+] DOCTOR CHECK"
+    echo "================================================="
+
+    cd "$MINE_DIR"
+
+    HOME="$WALLET_HOME" python3 scripts/run_tool.py doctor || true
 
     # =====================================================
     # START MINER
     # =====================================================
 
-    echo "[+] Starting miner..."
+    echo ""
+    echo "================================================="
+    echo "[+] START MINER"
+    echo "================================================="
 
-    HOME="$WALLET_HOME" pm2 start \
-    "$MINE_DIR/venv/bin/python $MINE_DIR/scripts/run_tool.py agent-start $DATASET" \
-    --name "$SESSION_NAME" \
-    --cwd "$MINE_DIR" \
-    --interpreter none
+    ATTEMPT=1
+
+    while true
+    do
+
+        echo ""
+        echo "[Attempt $ATTEMPT]"
+
+        OUTPUT=$(HOME="$WALLET_HOME" python3 scripts/run_tool.py agent-start $DATASET 2>&1 || true)
+
+        echo "$OUTPUT"
+
+        if echo "$OUTPUT" | grep -q '"state": "running"'; then
+
+            echo ""
+            echo "[✓] Mining Started Successfully"
+
+            break
+
+        fi
+
+        echo ""
+        echo "[!] Failed / Timeout"
+        echo "[!] Retrying in 15 seconds..."
+
+        sleep 15
+
+        ATTEMPT=$((ATTEMPT+1))
+
+    done
+
+    # =====================================================
+    # STATUS
+    # =====================================================
+
+    echo ""
+    echo "================================================="
+    echo "[+] MINER STATUS"
+    echo "================================================="
+
+    HOME="$WALLET_HOME" python3 scripts/run_tool.py agent-control status || true
+
+    echo ""
+    echo "[+] Wallet Folder"
+    echo "$WALLET_HOME"
+
+    echo ""
+    echo "[✓] Wallet $i Completed"
 
 done
 
 # =========================================================
-# SAVE PM2
-# =========================================================
-
-echo "[+] Saving PM2..."
-
-pm2 save
-
-pm2 startup || true
-
-# =========================================================
-# FINAL OUTPUT
+# FINAL
 # =========================================================
 
 echo ""
 echo "================================================="
-echo "[✓] INSTALLATION COMPLETE"
+echo "[✓] ALL INSTALLATION COMPLETE"
 echo "================================================="
 
 echo ""
-echo "[+] PM2 STATUS"
+echo "Wallet Locations"
 
-pm2 list
-
-echo ""
-echo "================================================="
-echo "USEFUL COMMANDS"
-echo "================================================="
+for i in $(seq 1 $TOTAL_WALLETS)
+do
+    echo "$BASE_DIR/w$i"
+done
 
 echo ""
-echo "PM2 Logs:"
-echo "pm2 logs mine-wallet-1"
+echo "Realtime Logs:"
+echo "tail -f $MINE_DIR/output/agent-runs/*.log"
 
 echo ""
-echo "PM2 Status:"
-echo "pm2 list"
+echo "Check Miner Status:"
+echo "HOME=$BASE_DIR/w1 python3 scripts/run_tool.py agent-control status"
 
 echo ""
-echo "Stop all:"
-echo "pm2 stop all"
+echo "Stop Miner:"
+echo "HOME=$BASE_DIR/w1 python3 scripts/run_tool.py agent-control stop"
 
 echo ""
-echo "Delete all:"
-echo "pm2 delete all"
-
-echo ""
-echo "Realtime logs:"
-echo "tail -f /root/mine-skill/output/agent-runs/*.log"
-
-echo ""
-echo "Wallet 1 Address:"
-echo "HOME=/root/w1 awp-wallet receive"
-
-echo ""
-echo "Wallet 1 JSON:"
-echo "cat /root/w1/.openclaw-wallet/wallets/default/wallet.json"
+echo "Wallet JSON:"
+echo "cat $BASE_DIR/w1/.openclaw-wallet/wallets/default/wallet.json"
 
 echo ""
 echo "Done 🚀"
