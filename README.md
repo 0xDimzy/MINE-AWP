@@ -1,51 +1,62 @@
-# AWP MineWork Multi Wallet Setup Guide (Hybrid Version)
+# MineWork Multi Wallet Setup Guide (Hybrid Version)
 
-Hybrid multi wallet setup using:
+Optimized hybrid setup for:
 
-- Shared global installation
-- Isolated wallet identities
-- Lower RAM & storage usage
-- Faster deployment
-- Better scalability
+- AWP Wallet
+- AWP Skill
+- Mine Skill
+- Multi Wallet Mining
+- PM2 Auto Run
+- VPS & Codespaces
 
-Based on:
-- `awp-wallet`
-- `awp-skill`
-- `mine-skill`
-
-This version is optimized for:
-- VPS
-- Codespaces
-- Multi account farming
-- Low resource servers
+This version is:
+- More lightweight
+- Faster
+- Lower RAM usage
+- Lower storage usage
+- Easier to maintain
+- Better for large multi wallet setups
 
 ---
 
-# Features
+# Why Use Hybrid Version?
 
-✅ Shared global repositories  
-✅ Shared Python environment  
-✅ Shared Mine Skill installation  
-✅ Isolated wallet identities  
-✅ Multi wallet support  
-✅ PM2 support  
-✅ Low RAM usage  
-✅ Low storage usage  
-✅ Faster updates  
+Most people make this mistake:
+
+```text
+/root/
+ ├── w1/
+ │    ├── awp-wallet
+ │    ├── awp-skill
+ │    └── mine-skill
+ │
+ ├── w2/
+ │    ├── awp-wallet
+ │    ├── awp-skill
+ │    └── mine-skill
+```
+
+This is BAD because:
+
+- Huge storage usage
+- Huge RAM usage
+- Slow installation
+- Slow updates
+- Duplicate dependencies
+- Duplicate Python environments
+
+If you run:
+- 10 wallets
+- 20 wallets
+- 50 wallets
+
+your VPS becomes very heavy.
 
 ---
 
-# Recommended VPS Specs
+# Hybrid Structure (Recommended)
 
-| Wallet Count | Recommended RAM |
-|---|---|
-| 1-3 Wallets | 2GB |
-| 5-10 Wallets | 4GB |
-| 10-20 Wallets | 8GB |
-
----
-
-# Folder Structure
+Instead, use:
 
 ```text
 /root/
@@ -64,58 +75,153 @@ This version is optimized for:
     └── .openclaw-wallet/
 ```
 
-Important:
+This means:
 
-- Repositories are shared globally
-- Wallet identities are isolated using `HOME=`
-- Each wallet has separate `.openclaw-wallet`
+| Shared Globally | Isolated Per Wallet |
+|---|---|
+| awp-wallet | .openclaw-wallet |
+| awp-skill | session token |
+| mine-skill | DID |
+| python venv | wallet address |
+| dependencies | miner identity |
 
 ---
 
-# Why Wallets Do Not Conflict
+# Is This Safe?
 
-This is SAFE because:
+YES.
+
+This is the important part:
+
+```bash
+HOME=/root/w1
+```
+
+Every AWP/OpenClaw command reads wallet identity from:
+
+```text
+$HOME/.openclaw-wallet
+```
+
+So:
+
+## Wallet 1
 
 ```bash
 HOME=/root/w1 awp-wallet init
 ```
 
-stores wallet data inside:
+creates:
 
 ```text
 /root/w1/.openclaw-wallet
 ```
 
-while:
+---
+
+## Wallet 2
 
 ```bash
 HOME=/root/w2 awp-wallet init
 ```
 
-stores wallet data inside:
+creates:
 
 ```text
 /root/w2/.openclaw-wallet
 ```
 
-So:
-- DID is different
-- Session token is different
-- Wallet address is different
-- Mining state is different
+---
+
+# Why Wallets Will NOT Conflict
 
 Even though:
-- `awp-wallet`
-- `awp-skill`
-- `mine-skill`
+- awp-wallet is shared
+- awp-skill is shared
+- mine-skill is shared
 
-are shared globally.
+the identities are different because:
+
+| Wallet | HOME | Wallet Storage |
+|---|---|---|
+| Wallet 1 | /root/w1 | /root/w1/.openclaw-wallet |
+| Wallet 2 | /root/w2 | /root/w2/.openclaw-wallet |
+| Wallet 3 | /root/w3 | /root/w3/.openclaw-wallet |
+
+This means:
+- different DID
+- different session token
+- different wallet address
+- different miner identity
+- different registration
+- different worknet participation
+
+---
+
+# VERY IMPORTANT
+
+Always run commands using:
+
+```bash
+HOME=/root/w1
+```
+
+Example:
+
+```bash
+HOME=/root/w1 awp-wallet unlock
+```
+
+Correct.
+
+---
+
+NEVER run:
+
+```bash
+awp-wallet unlock
+```
+
+without HOME.
+
+Because it may use:
+
+```text
+/root/.openclaw-wallet
+```
+
+and wallets may conflict.
+
+---
+
+# Advantages of Hybrid Setup
+
+| Feature | Hybrid Version |
+|---|---|
+| Lower RAM | ✅ |
+| Lower Storage | ✅ |
+| Faster Install | ✅ |
+| Faster Update | ✅ |
+| Easier Maintenance | ✅ |
+| Multi Wallet Friendly | ✅ |
+| VPS Friendly | ✅ |
+| Codespaces Friendly | ✅ |
+
+---
+
+# Recommended VPS Specs
+
+| Wallet Count | Recommended RAM |
+|---|---|
+| 1-3 Wallets | 2GB |
+| 5-10 Wallets | 4GB |
+| 10-20 Wallets | 8GB |
 
 ---
 
 # Quick Install
 
-Save script as:
+Save installer as:
 
 ```bash
 install.sh
@@ -127,7 +233,7 @@ Make executable:
 chmod +x install.sh
 ```
 
-Run installer:
+Run:
 
 ```bash
 ./install.sh
@@ -135,246 +241,291 @@ Run installer:
 
 ---
 
-# Auto Installer Script
+# Wallet Commands
 
-````bash
-#!/bin/bash
+## Create Wallet
 
-# =========================================================
-# AWP + MINE INSTALLER
-# HYBRID MULTI WALLET VERSION
-# =========================================================
+### Wallet 1
 
-set -e
+```bash
+mkdir -p /root/w1
 
-clear
+HOME=/root/w1 awp-wallet init
+```
 
-echo "================================================="
-echo "        AWP + MINE INSTALLER"
-echo "        HYBRID VERSION"
-echo "================================================="
-echo ""
+### Wallet 2
 
-# =========================================================
-# BASE DIRECTORY MENU
-# =========================================================
+```bash
+mkdir -p /root/w2
 
-echo "Select Base Directory:"
-echo ""
-echo "1) /root"
-echo "2) /home/ubuntu"
-echo "3) /workspaces/codespaces-blank"
-echo ""
+HOME=/root/w2 awp-wallet init
+```
 
-read -p "Choose [1-3]: " BASE_OPTION
+---
 
-if [ "$BASE_OPTION" == "1" ]; then
+# Check Wallet Address
 
-    BASE_DIR="/root"
+## Wallet 1
 
-elif [ "$BASE_OPTION" == "2" ]; then
+```bash
+HOME=/root/w1 awp-wallet receive
+```
 
-    BASE_DIR="/home/ubuntu"
+## Wallet 2
 
-elif [ "$BASE_OPTION" == "3" ]; then
+```bash
+HOME=/root/w2 awp-wallet receive
+```
 
-    BASE_DIR="/workspaces/codespaces-blank"
+---
 
-else
+# Open Wallet JSON
 
-    echo "Invalid option"
-    exit 1
+## Wallet 1
 
-fi
+```bash
+cat /root/w1/.openclaw-wallet/wallets/wallets.json
+```
 
-# =========================================================
-# WALLET COUNT
-# =========================================================
+## Wallet 2
 
-echo ""
+```bash
+cat /root/w2/.openclaw-wallet/wallets/wallets.json
+```
 
-read -p "How many wallets? : " TOTAL_WALLETS
+---
 
-# =========================================================
-# DATASET MENU
-# =========================================================
+# Backup Wallet
 
-echo ""
-echo "Select Dataset:"
-echo ""
-echo "1) Wikipedia"
-echo "2) arXiv"
-echo "3) Amazon Reviews"
-echo "4) Amazon Products"
-echo "5) LinkedIn Company"
-echo ""
+## Wallet 1
 
-read -p "Choose [1-5]: " DATASET_OPTION
+```bash
+cp -r /root/w1/.openclaw-wallet /root/w1/wallet-backup
+```
 
-case $DATASET_OPTION in
+---
 
-1)
-DATASET="ds_wikipedia"
-;;
+# Unlock Wallet Session
 
-2)
-DATASET="ds_arxiv"
-;;
+## Wallet 1
 
-3)
-DATASET="ds_amazon_reviews"
-;;
+```bash
+HOME=/root/w1 awp-wallet unlock
+```
 
-4)
-DATASET="ds_basic_amazon_products_active"
-;;
+---
 
-5)
-DATASET="ds_linkedin_company"
-;;
+# Start Mining
 
-*)
-echo "Invalid dataset"
-exit 1
-;;
+## Wikipedia
 
-esac
+```bash
+HOME=/root/w1 python3 /root/mine-skill/scripts/run_tool.py agent-start ds_wikipedia
+```
 
-# =========================================================
-# WORKNET MENU
-# =========================================================
+## arXiv
 
-echo ""
-echo "================================================="
-echo "SELECT WORKNET"
-echo "================================================="
-echo ""
-echo "1) #845300000014  AWP ARDI Worknet"
-echo "2) #845300000013  AWP TMR Worknet"
-echo "3) #845300000012  AWP KYA Worknet"
-echo "4) #845300000011  AWP Community Worknet"
-echo "5) #845300000010  AWP Government Worknet"
-echo "6) #845300000003  Predict WorkNet"
-echo "7) #845300000002  Mine Worknet"
-echo ""
+```bash
+HOME=/root/w1 python3 /root/mine-skill/scripts/run_tool.py agent-start ds_arxiv
+```
 
-read -p "Choose [1-7]: " WORKNET_OPTION
+## Amazon Reviews
 
-case $WORKNET_OPTION in
+```bash
+HOME=/root/w1 python3 /root/mine-skill/scripts/run_tool.py agent-start ds_amazon_reviews
+```
 
-1)
-WORKNET_ID="845300000014"
-WORKNET_NAME="AWP ARDI Worknet"
-;;
+## Amazon Products
 
-2)
-WORKNET_ID="845300000013"
-WORKNET_NAME="AWP TMR Worknet"
-;;
+```bash
+HOME=/root/w1 python3 /root/mine-skill/scripts/run_tool.py agent-start ds_basic_amazon_products_active
+```
 
-3)
-WORKNET_ID="845300000012"
-WORKNET_NAME="AWP KYA Worknet"
-;;
+---
 
-4)
-WORKNET_ID="845300000011"
-WORKNET_NAME="AWP Community Worknet"
-;;
+# Check Miner Status
 
-5)
-WORKNET_ID="845300000010"
-WORKNET_NAME="AWP Government Worknet"
-;;
+## Wallet 1
 
-6)
-WORKNET_ID="845300000003"
-WORKNET_NAME="Predict WorkNet"
-;;
+```bash
+HOME=/root/w1 python3 /root/mine-skill/scripts/run_tool.py agent-control status
+```
 
-7)
-WORKNET_ID="845300000002"
-WORKNET_NAME="Mine Worknet"
-;;
+---
 
-*)
-echo "Invalid worknet"
-exit 1
-;;
+# Pause Miner
 
-esac
+## Wallet 1
 
-# =========================================================
-# GLOBAL DIRECTORIES
-# =========================================================
+```bash
+HOME=/root/w1 python3 /root/mine-skill/scripts/run_tool.py agent-control pause
+```
 
-AWP_WALLET_DIR="$BASE_DIR/awp-wallet"
-AWP_SKILL_DIR="$BASE_DIR/awp-skill"
-MINE_DIR="$BASE_DIR/mine-skill"
+---
 
-echo ""
-echo "================================================="
-echo "CONFIGURATION"
-echo "================================================="
-echo "Base Dir : $BASE_DIR"
-echo "Wallets  : $TOTAL_WALLETS"
-echo "Dataset  : $DATASET"
-echo "Worknet  : $WORKNET_NAME"
-echo "================================================="
-echo ""
+# Resume Miner
 
-read -p "Continue? [y/n]: " CONFIRM
+## Wallet 1
 
-if [ "$CONFIRM" != "y" ]; then
-    exit 0
-fi
+```bash
+HOME=/root/w1 python3 /root/mine-skill/scripts/run_tool.py agent-control resume
+```
 
-echo ""
-echo "================================================="
-echo "[STEP 1] SYSTEM UPDATE"
-echo "================================================="
+---
 
-if command -v sudo >/dev/null 2>&1; then
-    sudo apt update
-    sudo apt upgrade -y
-else
-    apt update
-    apt upgrade -y
-fi
+# Stop Miner
 
-echo ""
-echo "================================================="
-echo "[STEP 2] INSTALL DEPENDENCIES"
-echo "================================================="
+## Wallet 1
 
-PACKAGES=()
+```bash
+HOME=/root/w1 python3 /root/mine-skill/scripts/run_tool.py agent-control stop
+```
 
-command -v curl >/dev/null 2>&1 || PACKAGES+=("curl")
-command -v git >/dev/null 2>&1 || PACKAGES+=("git")
-command -v gcc >/dev/null 2>&1 || PACKAGES+=("build-essential")
-command -v python3 >/dev/null 2>&1 || PACKAGES+=("python3")
-command -v pip3 >/dev/null 2>&1 || PACKAGES+=("python3-pip")
+---
 
-dpkg -s python3-venv >/dev/null 2>&1 || PACKAGES+=("python3-venv")
-dpkg -s ca-certificates >/dev/null 2>&1 || PACKAGES+=("ca-certificates")
-dpkg -s software-properties-common >/dev/null 2>&1 || PACKAGES+=("software-properties-common")
+# Realtime Logs
 
-command -v htop >/dev/null 2>&1 || PACKAGES+=("htop")
-command -v jq >/dev/null 2>&1 || PACKAGES+=("jq")
+```bash
+tail -f /root/mine-skill/output/agent-runs/*.log
+```
 
-if [ ${#PACKAGES[@]} -eq 0 ]; then
+---
 
-    echo "[✓] All dependencies already installed"
+# PM2 Auto Run
 
-else
+## Wallet 1
 
-    echo "[+] Installing missing packages:"
-    printf '%s\n' "${PACKAGES[@]}"
+```bash
+pm2 start "HOME=/root/w1 /root/mine-skill/.venv/bin/python /root/mine-skill/scripts/run_tool.py agent-start ds_wikipedia" --name mine-wallet-1
+```
 
-    if command -v sudo >/dev/null 2>&1; then
-        sudo apt install -y "${PACKAGES[@]}"
-    else
-        apt install -y "${PACKAGES[@]}"
-    fi
+## Wallet 2
 
-fi
+```bash
+pm2 start "HOME=/root/w2 /root/mine-skill/.venv/bin/python /root/mine-skill/scripts/run_tool.py agent-start ds_wikipedia" --name mine-wallet-2
+```
+
+---
+
+# PM2 Commands
+
+## View miners
+
+```bash
+pm2 list
+```
+
+---
+
+## Logs
+
+```bash
+pm2 logs mine-wallet-1
+```
+
+---
+
+## Restart miner
+
+```bash
+pm2 restart mine-wallet-1
+```
+
+---
+
+## Stop miner
+
+```bash
+pm2 stop mine-wallet-1
+```
+
+---
+
+## Delete miner
+
+```bash
+pm2 delete mine-wallet-1
+```
+
+---
+
+## Stop all miners
+
+```bash
+pm2 stop all
+```
+
+---
+
+## Delete all miners
+
+```bash
+pm2 delete all
+```
+
+---
+
+# Save PM2 Startup
+
+```bash
+pm2 save
+
+pm2 startup
+```
+
+---
+
+# Useful Commands
+
+## Check running processes
+
+```bash
+ps aux | grep mine
+```
+
+---
+
+## Kill process
+
+```bash
+kill -9 PID
+```
+
+---
+
+## Monitor VPS
+
+```bash
+htop
+```
+
+---
+
+# Common Dataset IDs
+
+```text
+ds_wikipedia
+ds_arxiv
+ds_amazon_reviews
+ds_basic_amazon_products_active
+ds_basic_amazon_products_pending
+ds_linkedin_company
+ds_linkedin_profiles
+```
+
+---
+
+# Important Notes
+
+- ALWAYS use `HOME=/root/wX`
+- 1 HOME = 1 wallet identity
+- Never run commands without HOME
+- Shared repo is safe
+- Shared venv is safe
+- Wallets remain isolated
+- Bootstrap only needs to run once
+- PM2 is recommended for 24/7 uptime
+- Wikipedia dataset is the most stable
+- LinkedIn datasets may require proxies
+- Amazon datasets may timeout sometimes
+- Backup `.openclaw-wallet` regularly
